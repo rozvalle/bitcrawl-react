@@ -1,4 +1,4 @@
-export let monsters = [];
+// src/game/monster.js
 
 export function createMonster(type, map) {
     const { x, y } = map.getRandomFloorTile();
@@ -8,15 +8,21 @@ export function createMonster(type, map) {
         y,
         hp: 10,
         maxHp: 10,
-        alive: true
+        alive: true,
     };
 }
 
+/**
+ * Generate monsters for a given map
+ */
 export function generateMonsters(map, count = 5) {
-    monsters = [];
+    const monsters = [];
     const types = ["goblin", "slime", "bat"];
+
     for (let i = 0; i < count; i++) {
-        const type = types[Math.floor(Math.random() * types.length)];
-        monsters.push(createMonster(types[i % types.length], map));
+        const type = types[i % types.length];
+        monsters.push(createMonster(type, map));
     }
+
+    return monsters;
 }
