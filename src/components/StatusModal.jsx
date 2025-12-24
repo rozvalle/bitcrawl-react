@@ -12,7 +12,7 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 zIndex: 10,
-                width: "50%",
+                width: "350px",
             }}
         >
             <p className="title">Status</p>
