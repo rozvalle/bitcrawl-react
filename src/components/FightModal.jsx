@@ -14,7 +14,7 @@ export default function FightModal({ isOpen, player, monster, onAttack, onRun })
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                width: "60%",
+                width: "500px",
                 transform: "translate(-50%, -50%)",
                 zIndex: 100,
                 backgroundColor: "#222",
