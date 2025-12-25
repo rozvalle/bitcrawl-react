@@ -37,3 +37,7 @@ export const deathSound = () => {
 export const gameOverSound = () => {
     zzfx(...[, , 925, .04, .3, .6, 1, .3, , 6.27, -184, .09, .17])
 };
+
+export const regenDungeonSound = () => {
+    zzfx(...[, , 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19])
+};
