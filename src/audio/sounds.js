@@ -1,4 +1,4 @@
-import { zzfx } from "./ZzFX.js";
+import { zzfx } from "./zzfx.js";
 
 const rand = (min, max) => min + Math.random() * (max - min);
 
