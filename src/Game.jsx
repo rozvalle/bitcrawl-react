@@ -34,7 +34,7 @@ export default function Game() {
     const [username, setUsername] = useState("");
 
     useEffect(() => {
-        const storedName = localStorage.getItem("username");
+        const storedName = sessionStorage.getItem("username");
         if (!storedName) {
             setShowPopup(true);
         } else {

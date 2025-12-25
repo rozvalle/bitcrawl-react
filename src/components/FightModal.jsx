@@ -24,7 +24,7 @@ export default function FightModal({ isOpen, player, monster, onAttack, onRun })
             <p className="title">Battle!</p>
 
             <div style={{ marginBottom: "8px" }}>
-                <p>{localStorage.getItem("username")}</p>
+                <p>{sessionStorage.getItem("username")}</p>
                 <div style={{ width: "100%", background: "#555", height: "16px" }}>
                     <div style={{ width: `${playerHpPercent}%`, background: "red", height: "16px" }}></div>
                 </div>

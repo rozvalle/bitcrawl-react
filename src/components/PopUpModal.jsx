@@ -8,7 +8,7 @@ export default function PopUpModal({ isOpen, onSave }) {
     const handleSave = () => {
         if (!name.trim()) return;
 
-        localStorage.setItem("username", name.trim());
+        sessionStorage.setItem("username", name.trim());
         onSave(name.trim());
     };
 

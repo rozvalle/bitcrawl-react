@@ -15,7 +15,7 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
                 width: "350px",
             }}
         >
-            <p className="title">{localStorage.getItem("username") }</p>
+            <p className="title">{sessionStorage.getItem("username") }</p>
 
             <div style={{ marginBottom: "8px" }}>
                 <div>HP: {player.hp}/{player.maxHp}</div>
