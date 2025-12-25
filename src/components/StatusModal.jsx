@@ -1,4 +1,5 @@
 import React from "react";
+import { uiSound } from "../audio/sounds";
 
 export default function StatusModal({ isOpen, onClose, player, floor }) {
     if (!isOpen) return null;
@@ -35,7 +36,7 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
             <button
                 className="nes-btn"
                 style={{ marginTop: "8px" }}
-                onClick={onClose}
+                onClick={() => { onClose(); uiSound(); }}
             >
                 Close
             </button>
