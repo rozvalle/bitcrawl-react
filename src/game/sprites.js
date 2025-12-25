@@ -1,10 +1,10 @@
 // Import the images using Vite/Webpack
-import floorImg from "../assets/sprites/floor1.png";
-import wallImg from "../assets/sprites/wall1.png";
-import playerImg from "../assets/sprites/player1.png";
-import goblinImg from "../assets/sprites/goblin.png";
-import slimeImg from "../assets/sprites/slime.png";
-import batImg from "../assets/sprites/bat.png";
+import floorImg from "/sprites/floor1.png";
+import wallImg from "/sprites/wall1.png";
+import playerImg from "/sprites/player1.png";
+import goblinImg from "/sprites/goblin.png";
+import slimeImg from "/sprites/slime.png";
+import batImg from "/sprites/bat.png";
 
 export const sprites = {
     floor: new Image(),
