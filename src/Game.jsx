@@ -6,12 +6,12 @@ import { render } from "./game/render";
 import { computeFOV } from "./game/fov";
 import { generateMonsters } from "./game/monster";
 import { loadSprites } from "./game/sprites";
-import { buttonClickSound } from "./ui";
 import { TILE_SIZE, WIDTH, HEIGHT } from "./game/constants";
 import FightModal from "./components/FightModal";
 import StatusModal from "./components/StatusModal";
 import PopUpModal from "./components/PopUpModal";
 import "./style.css";
+import{ attackSound, deathSound, monsterHitSound, monsterDeathSound, uiSound, gameOverSound } from "./audio/sounds";
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -118,7 +118,7 @@ export default function Game() {
 
     const regenDungeon = () => {
         if (!ctxRef.current || inFightRef.current) return;
-        buttonClickSound();
+        uiSound();
 
         const newMap = createMap(WIDTH, HEIGHT);
         const newPlayer = createPlayer(newMap);
@@ -146,12 +146,14 @@ export default function Game() {
         if (!player || !currentMonster) return;
 
         const dmg = Math.floor(Math.random() * 6) + 1;
+        attackSound();
         currentMonster.hp -= dmg;
         if (currentMonster.hp < 0) currentMonster.hp = 0;
         addMessage(`You hit the ${currentMonster.type} for ${dmg} damage!`);
 
         if (currentMonster.hp <= 0) {
             currentMonster.alive = false;
+            monsterDeathSound();
             addMessage(`You defeated the ${currentMonster.type}!`);
             setInFight(false);
             setCurrentMonster(null);
@@ -166,10 +168,13 @@ export default function Game() {
             const dmg = Math.floor(Math.random() * 4) + 1;
             playerRef.current.hp -= dmg;
             if (playerRef.current.hp < 0) playerRef.current.hp = 0;
+            monsterHitSound();
             addMessage(`${currentMonster.type} hits you for ${dmg} damage!`);
             if (playerRef.current.hp <= 0) {
                 setIsDead(true);
                 setInFight(false);
+                deathSound();
+                gameOverSound();
                 addMessage("You died! Game over.");
             }
             gameLoopRef.current();
@@ -208,7 +213,7 @@ export default function Game() {
                 <button
                     className="nes-btn"
                     style={{ marginLeft: "8px" }}
-                    onClick={() => setStatusOpen(true)}
+                    onClick={() => { setStatusOpen(true); uiSound(); }}
                 >
                     Status
                 </button>
