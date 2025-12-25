@@ -55,14 +55,15 @@ export default function Game() {
         const canvas = canvasRef.current;
         canvas.width = WIDTH * TILE_SIZE;
         canvas.height = HEIGHT * TILE_SIZE;
+
         const context = canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
         ctxRef.current = context;
 
         loadSprites(() => {
-            regenDungeon(); // initialize game
-            // Setup input once, using refs
-            setupInput({
+            regenDungeon();
+
+            const cleanup = setupInput({
                 player: playerRef,
                 map: mapRef,
                 monsters: monstersRef,
@@ -75,8 +76,11 @@ export default function Game() {
                 },
                 redraw: () => gameLoopRef.current(),
             });
+
+            return cleanup;
         });
     }, []);
+
 
     const gameLoop = () => {
         if (!ctxRef.current || !mapRef.current || !playerRef.current) return;
@@ -95,7 +99,7 @@ export default function Game() {
     gameLoopRef.current = gameLoop;
 
     const regenDungeon = () => {
-        if (!ctxRef.current || inFight) return;
+        if (!ctxRef.current || inFightRef.current) return;
         buttonClickSound();
 
         const newMap = createMap(WIDTH, HEIGHT);
