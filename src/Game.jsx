@@ -10,6 +10,7 @@ import { buttonClickSound } from "./ui";
 import { TILE_SIZE, WIDTH, HEIGHT } from "./game/constants";
 import FightModal from "./components/FightModal";
 import StatusModal from "./components/StatusModal";
+import PopUpModal from "./components/PopUpModal";
 import "./style.css";
 
 export default function Game() {
@@ -29,6 +30,23 @@ export default function Game() {
     const [inFight, setInFight] = useState(false);
     const [isDead, setIsDead] = useState(false);
     const isDeadRef = useRef(isDead);
+    const [showPopup, setShowPopup] = useState(false);
+    const [username, setUsername] = useState("");
+
+    useEffect(() => {
+        const storedName = localStorage.getItem("username");
+        if (!storedName) {
+            setShowPopup(true);
+        } else {
+            setUsername(storedName);
+        }
+    }, []);
+
+    const handleSaveUsername = (name) => {
+        setUsername(name);
+        setShowPopup(false);
+    };
+
     useEffect(() => {
         isDeadRef.current = isDead;
     }, [isDead]);
@@ -208,6 +226,11 @@ export default function Game() {
                 onClose={() => setStatusOpen(false)}
                 player={player}
                 floor={floor}
+            />
+
+            <PopUpModal
+                isOpen={showPopup}
+                onSave={handleSaveUsername}
             />
         </div>
     );
