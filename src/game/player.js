@@ -6,6 +6,9 @@ export function createPlayer(map) {
         hp: 20,
         maxHp: 20,
         level: 1,
-        inventory: ["potion"]
+        inventory: [
+            { name: "Potion", description: "Restores 10 HP", quantity: 2 },
+            { name: "Antidote", description: "Cures poison", quantity: 1 }
+        ]
     };
 }
