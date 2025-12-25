@@ -1,6 +1,6 @@
 // Import the images using Vite/Webpack
-import floorImg from "/sprites/floor1.png";
-import wallImg from "/sprites/wall1.png";
+import floorImg from "/sprites/floor.png";
+import wallImg from "/sprites/wall.png";
 import playerImg from "/sprites/player1.png";
 import goblinImg from "/sprites/goblin.png";
 import slimeImg from "/sprites/slime.png";
