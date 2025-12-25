@@ -11,7 +11,8 @@ import FightModal from "./components/FightModal";
 import StatusModal from "./components/StatusModal";
 import PopUpModal from "./components/PopUpModal";
 import "./style.css";
-import{ attackSound, deathSound, monsterHitSound, monsterDeathSound, uiSound, gameOverSound } from "./audio/sounds";
+import{ attackSound, deathSound, monsterHitSound, monsterDeathSound, uiSound, gameOverSound, regenDungeonSound } from "./audio/sounds";
+import { add } from "rot-js/lib/color";
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -74,6 +75,8 @@ export default function Game() {
         canvas.width = WIDTH * TILE_SIZE;
         canvas.height = HEIGHT * TILE_SIZE;
 
+        addMessage("Welcome to the Dungeon, " + (username || "Adventurer") + "!");
+        addMessage("Use arrow keys or WASD to move. Good luck!");
         const context = canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
         ctxRef.current = context;
@@ -138,7 +141,8 @@ export default function Game() {
         setExplored(new Set());
 
         gameLoopRef.current();
-        addMessage("Dungeon regenerated!");
+        regenDungeonSound();
+
     };
 
     const handleAttack = () => {
@@ -207,8 +211,8 @@ export default function Game() {
             </div>
 
             <div id="controls" style={{ marginTop: "8px" }}>
-                <button className="nes-btn" onClick={regenDungeon}>
-                    Regenerate Dungeon
+                <button className="nes-btn" onClick={() => { regenDungeon(); addMessage("The dungeon has been regenerated."); }}>
+                    New Game
                 </button>
                 <button
                     className="nes-btn"
