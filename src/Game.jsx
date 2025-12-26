@@ -11,10 +11,18 @@ import FightModal from "./components/FightModal";
 import StatusModal from "./components/StatusModal";
 import PopUpModal from "./components/PopUpModal";
 import "./style.css";
-import{ attackSound, deathSound, monsterHitSound, monsterDeathSound, uiSound, gameOverSound, regenDungeonSound } from "./audio/sounds";
-import { add } from "rot-js/lib/color";
+import {
+    attackSound,
+    deathSound,
+    monsterHitSound,
+    monsterDeathSound,
+    uiSound,
+    gameOverSound,
+    regenDungeonSound,
+} from "./audio/sounds";
 
 export default function Game() {
+    /* ---------- Refs (game state) ---------- */
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
 
@@ -23,63 +31,65 @@ export default function Game() {
     const monstersRef = useRef([]);
     const exploredRef = useRef(new Set());
 
+    const isDeadRef = useRef(false);
+    const inFightRef = useRef(false);
+    const inputLockedRef = useRef(false);
+    const gameLoopRef = useRef(() => { });
+
+    /* ---------- React state (UI) ---------- */
     const [player, setPlayer] = useState(null);
-    const [map, setMap] = useState(null);
-    const [visible, setVisible] = useState(new Set());
-    const [explored, setExplored] = useState(new Set());
     const [messages, setMessages] = useState([]);
+    const [currentMonster, setCurrentMonster] = useState(null);
+
     const [inFight, setInFight] = useState(false);
     const [isDead, setIsDead] = useState(false);
-    const isDeadRef = useRef(isDead);
+    const [statusOpen, setStatusOpen] = useState(false);
+
     const [showPopup, setShowPopup] = useState(false);
     const [username, setUsername] = useState("");
 
-    useEffect(() => {
-        const storedName = sessionStorage.getItem("username");
-        if (!storedName) {
-            setShowPopup(true);
-        } else {
-            setUsername(storedName);
-        }
-    }, []);
-
-    const handleSaveUsername = (name) => {
-        setUsername(name);
-        setShowPopup(false);
-    };
-
-    useEffect(() => {
-        isDeadRef.current = isDead;
-    }, [isDead]);
-    const inFightRef = useRef(inFight);
-    useEffect(() => {
-        inFightRef.current = inFight;
-    }, [inFight]);
-    const [currentMonster, setCurrentMonster] = useState(null);
-
     const logRef = useRef(null);
-    const addMessage = (msg) => setMessages((prev) => [...prev, msg]);
-
-    const gameLoopRef = useRef(() => { });
-
-    const [statusOpen, setStatusOpen] = useState(false);
     const floor = 1;
 
-    // Scroll log
+    /* ---------- Effects ---------- */
+
+    // Username check
     useEffect(() => {
-        if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+        const stored = sessionStorage.getItem("username");
+        if (!stored) setShowPopup(true);
+        else setUsername(stored);
+    }, []);
+
+    // Sync refs with state
+    useEffect(() => {
+        isDeadRef.current = isDead;
+        inFightRef.current = inFight;
+        inputLockedRef.current = showPopup || statusOpen || inFight || isDead;
+    }, [isDead, inFight, showPopup, statusOpen]);
+
+    // Auto-scroll message log
+    useEffect(() => {
+        if (logRef.current) {
+            logRef.current.scrollTop = logRef.current.scrollHeight;
+        }
     }, [messages]);
 
+    // Init canvas + input
     useEffect(() => {
         const canvas = canvasRef.current;
+        const SCALE = 2;
+
         canvas.width = WIDTH * TILE_SIZE;
         canvas.height = HEIGHT * TILE_SIZE;
+        canvas.style.width = `${canvas.width * SCALE}px`;
+        canvas.style.height = `${canvas.height * SCALE}px`;
 
-        addMessage("Welcome to the Dungeon, " + (username || "Adventurer") + "!");
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctxRef.current = ctx;
+
+        addMessage(`Welcome to the Dungeon, ${username || "Adventurer"}!`);
         addMessage("Use arrow keys or WASD to move. Good luck!");
-        const context = canvas.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        ctxRef.current = context;
 
         loadSprites(() => {
             regenDungeon();
@@ -90,7 +100,7 @@ export default function Game() {
                 monsters: monstersRef,
                 inFight: inFightRef,
                 isDead: isDeadRef,
-                addMessage,
+                inputLocked: () => inputLockedRef.current,
                 startFight: (monster) => {
                     setCurrentMonster(monster);
                     setInFight(true);
@@ -102,12 +112,15 @@ export default function Game() {
         });
     }, []);
 
+    /* ---------- Game logic ---------- */
+
+    const addMessage = (msg) =>
+        setMessages((prev) => [...prev, msg]);
 
     const gameLoop = () => {
         if (!ctxRef.current || !mapRef.current || !playerRef.current) return;
 
         const vis = computeFOV(playerRef.current, mapRef.current);
-        setVisible(vis);
         render(
             mapRef.current,
             playerRef.current,
@@ -120,104 +133,103 @@ export default function Game() {
     gameLoopRef.current = gameLoop;
 
     const regenDungeon = () => {
-        if (!ctxRef.current || inFightRef.current) return;
+        if (inFightRef.current) return;
+
         uiSound();
 
-        const newMap = createMap(WIDTH, HEIGHT);
-        const newPlayer = createPlayer(newMap);
-        const newMonsters = generateMonsters(newMap);
+        const map = createMap(WIDTH, HEIGHT);
+        const player = createPlayer(map);
 
-        // Update refs
-        mapRef.current = newMap;
-        playerRef.current = newPlayer;
-        monstersRef.current = newMonsters;
+        mapRef.current = map;
+        playerRef.current = player;
+        monstersRef.current = generateMonsters(map);
         exploredRef.current = new Set();
-        isDeadRef.current = false;
+
+        setPlayer(player);
         setIsDead(false);
 
-        // Update state for React rendering/UI
-        setMap(newMap);
-        setPlayer(newPlayer);
-        setExplored(new Set());
-
-        gameLoopRef.current();
+        gameLoop();
         regenDungeonSound();
-
     };
+
+    /* ---------- Combat ---------- */
 
     const handleAttack = () => {
         const player = playerRef.current;
-        if (!player || !currentMonster) return;
+        const monster = currentMonster;
+        if (!player || !monster) return;
 
         const dmg = Math.floor(Math.random() * 6) + 1;
         attackSound();
-        currentMonster.hp -= dmg;
-        if (currentMonster.hp < 0) currentMonster.hp = 0;
-        addMessage(`You hit the ${currentMonster.type} for ${dmg} damage!`);
+        monster.hp = Math.max(0, monster.hp - dmg);
+        addMessage(`You hit the ${monster.type} for ${dmg} damage!`);
 
-        if (currentMonster.hp <= 0) {
-            currentMonster.alive = false;
+        if (monster.hp <= 0) {
+            monster.alive = false;
             monsterDeathSound();
-            addMessage(`You defeated the ${currentMonster.type}!`);
+            addMessage(`You defeated the ${monster.type}!`);
             setInFight(false);
             setCurrentMonster(null);
-
-            // Immediately redraw so monster disappears
-            gameLoopRef.current();
+            gameLoop();
             return;
         }
 
         setTimeout(() => {
-            if (!playerRef.current || !currentMonster) return;
-            const dmg = Math.floor(Math.random() * 4) + 1;
-            playerRef.current.hp -= dmg;
-            if (playerRef.current.hp < 0) playerRef.current.hp = 0;
+            const mdmg = Math.floor(Math.random() * 4) + 1;
+            player.hp = Math.max(0, player.hp - mdmg);
             monsterHitSound();
-            addMessage(`${currentMonster.type} hits you for ${dmg} damage!`);
-            if (playerRef.current.hp <= 0) {
+            addMessage(`${monster.type} hits you for ${mdmg} damage!`);
+
+            if (player.hp <= 0) {
                 setIsDead(true);
                 setInFight(false);
                 deathSound();
                 gameOverSound();
                 addMessage("You died! Game over.");
             }
-            gameLoopRef.current();
-        }, 300);
 
-        gameLoopRef.current();
+            gameLoop();
+        }, 300);
     };
 
     const handleRun = () => {
         addMessage("You run away!");
         setInFight(false);
         setCurrentMonster(null);
-        gameLoopRef.current();
+        gameLoop();
     };
+
+    /* ---------- Render ---------- */
 
     return (
         <div id="ui-container">
             <div id="game-wrapper" className="nes-container is-dark with-title">
                 <p className="title">Dungeon</p>
-                <canvas ref={canvasRef} id="game"></canvas>
+                <canvas ref={canvasRef} />
             </div>
 
             <div
                 id="message-log"
                 ref={logRef}
                 className="nes-container is-dark"
-                style={{ height: "120px", overflowY: "auto", marginTop: "8px" }}
+                style={{ height: "120px", marginTop: "8px" }}
             >
-                {messages.map((msg, idx) => <div key={idx}>{msg}</div>)}
+                {messages.map((msg, i) => (
+                    <div key={i}>{msg}</div>
+                ))}
             </div>
 
             <div id="controls" style={{ marginTop: "8px" }}>
-                <button className="nes-btn" onClick={() => { regenDungeon(); addMessage("The dungeon has been regenerated."); }}>
+                <button className="nes-btn" onClick={regenDungeon}>
                     New Game
                 </button>
                 <button
                     className="nes-btn"
                     style={{ marginLeft: "8px" }}
-                    onClick={() => { setStatusOpen(true); uiSound(); }}
+                    onClick={() => {
+                        setStatusOpen(true);
+                        uiSound();
+                    }}
                 >
                     Status
                 </button>
@@ -230,6 +242,7 @@ export default function Game() {
                 onAttack={handleAttack}
                 onRun={handleRun}
             />
+
             <StatusModal
                 isOpen={statusOpen}
                 onClose={() => setStatusOpen(false)}
@@ -239,7 +252,11 @@ export default function Game() {
 
             <PopUpModal
                 isOpen={showPopup}
-                onSave={handleSaveUsername}
+                onSave={(name) => {
+                    sessionStorage.setItem("username", name);
+                    setUsername(name);
+                    setShowPopup(false);
+                }}
             />
         </div>
     );
