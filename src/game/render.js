@@ -2,8 +2,9 @@
 import { TILE_SIZE, WIDTH, HEIGHT } from "./constants";
 import { sprites } from "./sprites";
 
-export function render(map, player, visible, explored, ctx, monsters) {
+export function render(map, player, visible, explored, ctx, monsters, items) {
     if (!monsters) monsters = [];
+    if (!items) items = [];
 
     ctx.clearRect(0, 0, WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE);
 
@@ -38,6 +39,15 @@ export function render(map, player, visible, explored, ctx, monsters) {
         const key = `${m.x},${m.y}`;
         if (m.alive && visible.has(key)) {
             ctx.drawImage(sprites[m.type], m.x * TILE_SIZE, m.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+    });
+
+    // Draw items
+    items.forEach((item) => {
+        if (item.picked) return;
+        const key = `${item.x},${item.y}`;
+        if (!item.picked && visible.has(key)) {
+            ctx.drawImage(sprites[item.type], item.x * TILE_SIZE, item.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
     });
 
