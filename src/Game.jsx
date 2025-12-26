@@ -5,6 +5,7 @@ import { setupInput } from "./game/input";
 import { render } from "./game/render";
 import { computeFOV } from "./game/fov";
 import { generateMonsters } from "./game/monster";
+import { generateItems } from "./game/items";
 import { loadSprites } from "./game/sprites";
 import { TILE_SIZE, WIDTH, HEIGHT } from "./game/constants";
 import FightModal from "./components/FightModal";
@@ -17,6 +18,7 @@ import {
     monsterHitSound,
     monsterDeathSound,
     uiSound,
+    pickUpItemSound,
     gameOverSound,
     regenDungeonSound,
 } from "./audio/sounds";
@@ -29,6 +31,7 @@ export default function Game() {
     const playerRef = useRef(null);
     const mapRef = useRef(null);
     const monstersRef = useRef([]);
+    const itemsRef = useRef([]);
     const exploredRef = useRef(new Set());
 
     const isDeadRef = useRef(false);
@@ -98,6 +101,7 @@ export default function Game() {
                 player: playerRef,
                 map: mapRef,
                 monsters: monstersRef,
+                items: itemsRef,
                 inFight: inFightRef,
                 isDead: isDeadRef,
                 inputLocked: () => inputLockedRef.current,
@@ -106,6 +110,7 @@ export default function Game() {
                     setInFight(true);
                 },
                 redraw: () => gameLoopRef.current(),
+                pickupItem: pickUpItem,
             });
 
             return cleanup;
@@ -127,7 +132,8 @@ export default function Game() {
             vis,
             exploredRef.current,
             ctxRef.current,
-            monstersRef.current
+            monstersRef.current,
+            itemsRef.current
         );
     };
     gameLoopRef.current = gameLoop;
@@ -143,6 +149,7 @@ export default function Game() {
         mapRef.current = map;
         playerRef.current = player;
         monstersRef.current = generateMonsters(map);
+        itemsRef.current = generateItems(map);
         exploredRef.current = new Set();
 
         setPlayer(player);
@@ -162,6 +169,8 @@ export default function Game() {
         const dmg = Math.floor(Math.random() * 6) + 1;
         attackSound();
         monster.hp = Math.max(0, monster.hp - dmg);
+        // update React state for monster so UI reflects the changed HP
+        setCurrentMonster({ ...monster });
         addMessage(`You hit the ${monster.type} for ${dmg} damage!`);
 
         if (monster.hp <= 0) {
@@ -177,6 +186,8 @@ export default function Game() {
         setTimeout(() => {
             const mdmg = Math.floor(Math.random() * 4) + 1;
             player.hp = Math.max(0, player.hp - mdmg);
+            // update React state for player so UI reflects the changed HP
+            setPlayer({ ...player });
             monsterHitSound();
             addMessage(`${monster.type} hits you for ${mdmg} damage!`);
 
@@ -201,39 +212,36 @@ export default function Game() {
 
     /* ---------- Inventory / Status ---------- */
 
-    // Inside your Game component
-
-    const useItem = (itemName) => {
+    const pickUpItem = () => {
         const player = playerRef.current;
-        if (!player) return;
+        const items = itemsRef.current;
+        if (!player || !items) return;
 
-        const itemIndex = player.inventory.findIndex(
-            (item) => item.name === itemName
+        // Find the item at player's position
+        const item = items.find(
+            (i) => i.x === player.x && i.y === player.y && !i.picked
         );
 
-        if (itemIndex === -1) return; // Player doesn't have the item
+        if (!item) return;
 
-        const item = player.inventory[itemIndex];
+        item.picked = true;
+        pickUpItemSound();
 
-        // Example: Healing potion
         if (item.type === "potion") {
-            const healAmount = 10; // or item.heal if stored
-            player.hp = Math.min(player.maxHp, player.hp + healAmount);
-            addMessage(`You used a ${item.name} and healed ${healAmount} HP!`);
-            uiSound();
-
-            // Reduce quantity
-            item.quantity -= 1;
-            if (item.quantity <= 0) {
-                // Remove from inventory
-                player.inventory.splice(itemIndex, 1);
+            // If potion add quantity if already in inventory
+            const invItem = player.inventory.find((i) => i.name === "Potion");
+            if (invItem) {
+                invItem.quantity += 1;
             }
-
-            // Update state to re-render inventory and HP
-            setPlayer({ ...player });
         }
-    };
 
+        addMessage(`You picked up a ${item.type}!`);
+
+        playerRef.current = player;  // keep the ref current
+        setPlayer({ ...player });  // update React state
+        
+        gameLoopRef.current();
+    };
 
     /* ---------- Render ---------- */
 
