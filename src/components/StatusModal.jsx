@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { uiSound } from "../audio/sounds";
 
-export default function StatusModal({ isOpen, onClose, player, floor }) {
+export default function StatusModal({ isOpen, onClose, player, floor, playerRef, addMessage, setPlayer }) {
     const [selectedItem, setSelectedItem] = useState(null);
 
     if (!isOpen) return null;
@@ -15,6 +15,37 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
             setSelectedItem(item);
         }
     };
+
+    const useItem = (itemName) => {
+    const currentPlayer = playerRef.current;
+    if (!currentPlayer) return;
+
+    const itemIndex = currentPlayer.inventory.findIndex(i => i.name === itemName);
+    if (itemIndex === -1) return;
+
+    const item = currentPlayer.inventory[itemIndex];
+
+    if (item.type === "potion") {
+        const healAmount = item.heal || 10;
+        currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + healAmount);
+
+        addMessage(`You used a ${item.name} and healed ${healAmount} HP!`);
+        uiSound();
+
+        // Reduce quantity or remove
+        if (item.quantity > 1) {
+            currentPlayer.inventory[itemIndex].quantity -= 1;
+        } else {
+            currentPlayer.inventory.splice(itemIndex, 1);
+        }
+
+        // Update both the ref and React state
+        playerRef.current = { ...currentPlayer };
+        setPlayer(playerRef.current);
+
+        setSelectedItem(null);
+    }
+};
 
     return (
         <div
@@ -46,7 +77,9 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
                         .map((item, idx) => (
                             <li
                                 key={idx}
-                                onClick={() => handleItemClick(item)}
+                                onClick={() => {
+                                    handleItemClick(item);
+                                }}
                                 style={{ cursor: "pointer" }}
                             >
                                 {item.name} {`x${item.quantity}`}
@@ -61,6 +94,12 @@ export default function StatusModal({ isOpen, onClose, player, floor }) {
                     >
                         <p><strong>{selectedItem.name}</strong></p>
                         <p>{selectedItem.description}</p>
+                        <button
+                            className="nes-btn"
+                            onClick={() => { useItem(selectedItem.name); }}
+                        >
+                            Use Item
+                        </button>
                     </div>
                 )}
             </div>
