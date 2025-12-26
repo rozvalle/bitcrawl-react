@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { uiSound } from "../audio/sounds";
+import { uiSound, healSound} from "../audio/sounds";
 
 export default function StatusModal({ isOpen, onClose, player, floor, playerRef, addMessage, setPlayer }) {
     const [selectedItem, setSelectedItem] = useState(null);
@@ -30,7 +30,7 @@ export default function StatusModal({ isOpen, onClose, player, floor, playerRef,
         currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + healAmount);
 
         addMessage(`You used a ${item.name} and healed ${healAmount} HP!`);
-        uiSound();
+        healSound();
 
         // Reduce quantity or remove
         if (item.quantity > 1) {
