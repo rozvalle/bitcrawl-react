@@ -199,6 +199,42 @@ export default function Game() {
         gameLoop();
     };
 
+    /* ---------- Inventory / Status ---------- */
+
+    // Inside your Game component
+
+    const useItem = (itemName) => {
+        const player = playerRef.current;
+        if (!player) return;
+
+        const itemIndex = player.inventory.findIndex(
+            (item) => item.name === itemName
+        );
+
+        if (itemIndex === -1) return; // Player doesn't have the item
+
+        const item = player.inventory[itemIndex];
+
+        // Example: Healing potion
+        if (item.type === "potion") {
+            const healAmount = 10; // or item.heal if stored
+            player.hp = Math.min(player.maxHp, player.hp + healAmount);
+            addMessage(`You used a ${item.name} and healed ${healAmount} HP!`);
+            uiSound();
+
+            // Reduce quantity
+            item.quantity -= 1;
+            if (item.quantity <= 0) {
+                // Remove from inventory
+                player.inventory.splice(itemIndex, 1);
+            }
+
+            // Update state to re-render inventory and HP
+            setPlayer({ ...player });
+        }
+    };
+
+
     /* ---------- Render ---------- */
 
     return (
@@ -245,6 +281,9 @@ export default function Game() {
 
             <StatusModal
                 isOpen={statusOpen}
+                playerRef={playerRef}
+                setPlayer={setPlayer}
+                addMessage={addMessage}
                 onClose={() => setStatusOpen(false)}
                 player={player}
                 floor={floor}
