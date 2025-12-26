@@ -163,13 +163,26 @@ export default function Game() {
 
     const handleAttack = () => {
         const player = playerRef.current;
-        const monster = currentMonster;
-        if (!player || !monster) return;
+        const monsterState = currentMonster;
+        if (!player || !monsterState) return;
 
         const dmg = Math.floor(Math.random() * 6) + 1;
         attackSound();
+
+        // Find the real monster object in the monstersRef array (currentMonster may be a copy)
+        const ms = monstersRef.current || [];
+        const idx = ms.findIndex(
+            (m) => m.x === monsterState.x && m.y === monsterState.y && m.type === monsterState.type && m.alive
+        );
+        if (idx === -1) {
+            // Monster not found (maybe already removed)
+            return;
+        }
+
+        const monster = ms[idx];
         monster.hp = Math.max(0, monster.hp - dmg);
-        // update React state for monster so UI reflects the changed HP
+
+        // Sync UI state with the actual monster object
         setCurrentMonster({ ...monster });
         addMessage(`You hit the ${monster.type} for ${dmg} damage!`);
 
@@ -186,8 +199,10 @@ export default function Game() {
         setTimeout(() => {
             const mdmg = Math.floor(Math.random() * 4) + 1;
             player.hp = Math.max(0, player.hp - mdmg);
-            // update React state for player so UI reflects the changed HP
+            // keep the player ref current and update React state so UI shows new HP
+            playerRef.current = player;
             setPlayer({ ...player });
+
             monsterHitSound();
             addMessage(`${monster.type} hits you for ${mdmg} damage!`);
 
