@@ -41,3 +41,11 @@ export const gameOverSound = () => {
 export const regenDungeonSound = () => {
     zzfx(...[, , 80, .3, .4, .7, 2, .1, -0.73, 3.42, -430, .09, .17, , , , .19])
 };
+
+export const healSound = () => {
+    zzfx(...[, , 20, .04, , .6, , 1.31, , , -990, .06, .17, , , .04, .07]);
+};
+
+export const pickUpItemSound = () => {
+    zzfx(...[, , 539, 0, .04, .29, 1, 1.92, , , 567, .02, .02, , , , .04]);
+};
