@@ -5,6 +5,7 @@ import playerImg from "/sprites/player1.png";
 import goblinImg from "/sprites/goblin.png";
 import slimeImg from "/sprites/slime.png";
 import batImg from "/sprites/bat.png";
+import potionImg from "/sprites/potion.png";
 
 export const sprites = {
     floor: new Image(),
@@ -12,7 +13,8 @@ export const sprites = {
     player: new Image(),
     goblin: new Image(),
     slime: new Image(),
-    bat: new Image()
+    bat: new Image(),
+    potion: new Image()
 };
 
 // Assign the imported URLs to the images
@@ -22,6 +24,7 @@ sprites.player.src = playerImg;
 sprites.goblin.src = goblinImg;
 sprites.slime.src = slimeImg;
 sprites.bat.src = batImg;
+sprites.potion.src = potionImg;
 
 // Helper to wait for all images to load
 export function loadSprites(onReady) {
