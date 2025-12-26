@@ -19,6 +19,7 @@ export function setupInput({
   isDead,
   startFight,
   redraw,
+  inputLocked,
 }) {
   const onKeyDown = (e) => {
     const key = e.key.toLowerCase();
@@ -27,6 +28,7 @@ export function setupInput({
     if (!dir) return;
     if (isDead.current) return;
     if (inFight.current) return;
+    if (inputLocked && inputLocked()) return;
 
     const p = player.current;
     const m = map.current;
