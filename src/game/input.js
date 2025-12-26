@@ -19,6 +19,7 @@ export function setupInput({
   isDead,
   startFight,
   redraw,
+  pickupItem,
   inputLocked,
 }) {
   const onKeyDown = (e) => {
@@ -53,6 +54,10 @@ export function setupInput({
       p.y = ny;
       redraw();
       stepSound();
+
+      if (pickupItem) {
+        pickupItem();
+      }
     } else {
       bumpSound();
     }
